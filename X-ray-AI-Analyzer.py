@@ -8,8 +8,9 @@ st.title("Chest X-ray Diagnosis AI")
 # Load model
 @st.cache_resource
 def load_model():
-    model_id = "Iaroslav/chexpert-xray-classification"
+    model_id = "yashk2810/Chest-X-Ray-Classifier"
     model = AutoModelForImageClassification.from_pretrained(model_id)
+    print("Model loaded successfully")
     processor = AutoImageProcessor.from_pretrained(model_id)
     return model, processor
 
