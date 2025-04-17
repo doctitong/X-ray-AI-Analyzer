@@ -7,8 +7,8 @@ from transformers import AutoModelForImageClassification, AutoImageProcessor
 # Load model and processor once
 @st.cache_resource
 def load_model():
-    processor = AutoImageProcessor.from_pretrained("openmedlab/ChestXray14")
-    model = AutoModelForImageClassification.from_pretrained("openmedlab/ChestXray14")
+    processor = AutoImageProcessor.from_pretrained("abhishek/Chest-Xray-ResNet50")
+    model = AutoModelForImageClassification.from_pretrained("abhishek/Chest-Xray-ResNet50")
     model.eval()
     return processor, model
 
