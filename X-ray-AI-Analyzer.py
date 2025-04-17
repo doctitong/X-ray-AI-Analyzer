@@ -1,42 +1,37 @@
 import streamlit as st
 from PIL import Image
 import torch
-from torchvision import transforms
 from transformers import AutoModelForImageClassification, AutoImageProcessor
 
-# Load model and processor once
+st.title("Chest X-ray Diagnosis AI")
+
+# Load model
 @st.cache_resource
 def load_model():
-    processor = AutoImageProcessor.from_pretrained("nateraw/resnet50-oxford-pets", use_auth_token=True)
-    model = AutoModelForImageClassification.from_pretrained("nateraw/resnet50-oxford-pets", use_auth_token=True)
-    model.eval()
-    return processor, model
+    model_id = "Iaroslav/chexpert-xray-classification"
+    model = AutoModelForImageClassification.from_pretrained(model_id)
+    processor = AutoImageProcessor.from_pretrained(model_id)
+    return model, processor
 
-# Preprocess and predict
-def analyze_xray(image, processor, model):
+model, processor = load_model()
+
+# Upload image
+uploaded_file = st.file_uploader("Upload a chest X-ray", type=["jpg", "png", "jpeg"])
+if uploaded_file:
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Uploaded X-ray", use_column_width=True)
+
+    # Preprocess and predict
     inputs = processor(images=image, return_tensors="pt")
     with torch.no_grad():
         outputs = model(**inputs)
-    logits = outputs.logits
-    probs = torch.sigmoid(logits)[0]
+        probs = torch.sigmoid(outputs.logits).squeeze().numpy()
 
-    # Label mapping
+    # Display results
     labels = model.config.id2label
-    results = [(labels[i], float(probs[i])) for i in range(len(probs))]
-    results.sort(key=lambda x: x[1], reverse=True)
-    return results[:5]  # Top 5 conditions
+    st.subheader("AI Findings:")
+    for idx, (label, prob) in enumerate(zip(labels.values(), probs)):
+        st.write(f"{label}: **{prob:.2f}**")
 
-# Streamlit interface
-st.title("🩻 XrayGPT - Chest X-ray Assistant")
 
-uploaded_file = st.file_uploader("Upload Chest X-ray (JPG/PNG)", type=["jpg", "jpeg", "png"])
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Chest X-ray", use_column_width=True)
-
-    processor, model = load_model()
-    results = analyze_xray(image, processor, model)
-
-    st.markdown("### 🧠 Top 5 Predicted Findings:")
-    for label, prob in results:
-        st.write(f"**{label}** — Confidence: {prob:.2%}")
+ 
